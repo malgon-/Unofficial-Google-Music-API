@@ -74,6 +74,13 @@ class Webclient(_Base):
         super(Webclient, self).__init__()
         self._authtoken = None
 
+    def setToken(self, token):
+        t = token.partition(";")
+        self._authtoken = t[0]
+        self.is_authenticated = True
+        if t[2] != '':
+            self._rsession.cookies['xt'] = t[2]
+
     def login(self, email, password, *args, **kwargs):
         """
         Perform clientlogin then retrieve webclient cookies.
@@ -101,9 +108,27 @@ class Webclient(_Base):
             # throw away clientlogin credentials
             self.logout()
 
-        return self.is_authenticated
+
+        return self.is_authenticated, self._authtoken+";"+self._rsession.cookies['xt']
+
+    def login_token(self, token):
+        self._authtoken = token
+
+        self.is_authenticated = True
+
+        # Get webclient cookies.
+        # They're stored automatically by requests on the webclient session.
+        try:
+            webclient.Init.perform(self)
+        except CallFailure:
+            # throw away clientlogin credentials
+            self.logout()
+
+
+        return self.is_authenticated, self._authtoken+";"+self._rsession.cookies['xt']
 
     def _send_with_auth(self, req_kwargs, desired_auth, rsession):
+        print desired_auth
         if desired_auth.sso:
             req_kwargs['headers'] = req_kwargs.get('headers', {})
 

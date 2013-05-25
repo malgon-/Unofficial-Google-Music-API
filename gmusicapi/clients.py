@@ -658,6 +658,9 @@ class Webclient(_Base):
         super(Webclient, self).__init__(self.__class__.__name__, debug_logging)
         self.logout()
 
+    def setToken(self, token):
+        self.session.setToken(token)
+
     def login(self, email, password):
         """Authenticates the webclient.
         Returns ``True`` on success, ``False`` on failure.
@@ -669,14 +672,24 @@ class Webclient(_Base):
         Users of two-factor authentication will need to set an application-specific password
         to log in.
         """
-
-        if not self.session.login(email, password):
+        ok, token = self.session.login(email, password)
+        if not ok:
             self.logger.info("failed to authenticate")
             return False
 
         self.logger.info("authenticated")
 
-        return True
+        return True, token
+
+    def login_token(self, token):
+        ok, token = self.session.login_token(token)
+        if not ok:
+            self.logger.info("failed to authenticate")
+            return False
+
+        self.logger.info("authenticated")
+
+        return True, token
 
     def logout(self):
         return super(Webclient, self).logout()
